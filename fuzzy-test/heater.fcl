@@ -1,0 +1,39 @@
+FUNCTION_BLOCK heater // Block definition (there may be more than one block per file)
+
+VAR_INPUT // Define input variables
+currentADC : REAL;
+targetADC : REAL;
+END_VAR
+
+VAR_OUTPUT // Define output variable
+power : REAL;
+END_VAR
+
+FUZZIFY currentADC // Fuzzify input variable 'currentADC': {'small', 'big'}
+TERM small := (0, 1) (768, 0) ;
+TERM big := (512, 0) (1024,1) ;
+END_FUZZIFY
+
+FUZZIFY targetADC // Fuzzify input variable 'targetADC': { 'small', 'big' }
+TERM small := (0, 1) (768, 0) ;
+TERM big := (512, 0) (1024,1) ;
+END_FUZZIFY
+
+DEFUZZIFY power // Defuzzify output variable 'power' : { 'small' , 'big' }
+TERM small := (0,0) (64,1) (128,0);
+TERM big := (128,0) (192,1) (255,0);
+METHOD : COG; // Use 'Center Of Gravity' defuzzification method
+DEFAULT := 0; // Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+RULEBLOCK No1
+AND : MIN; // Use 'min' for 'and' (also implicit use 'max' for 'or' to fulfill DeMorgan's Law)
+ACT : MIN; // Use 'min' activation method
+ACCU : MAX; // Use 'max' accumulation method
+
+RULE 1 : IF currentADC IS big AND targetADC IS small THEN power IS big;
+RULE 2 : IF currentADC IS small OR targetADC IS big THEN power IS small;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
